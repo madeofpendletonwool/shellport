@@ -94,10 +94,10 @@ export default function MobileKeybar({ onInput, onModifier }: Props) {
                 key={key.label}
                 onPointerDown={e => { e.preventDefault(); handleKey(key) }}
                 className={`flex-1 py-1.5 text-[11px] font-mono tracking-tight
-                  border-r border-border last:border-r-0 transition-colors
+                  border-r border-border last:border-r-0 transition-all duration-180
                   ${active
-                    ? 'bg-accent text-white'
-                    : 'text-muted hover:text-white active:bg-surface3'
+                    ? 'bg-accent text-surface font-semibold shadow-glow-xs'
+                    : 'text-muted hover:text-white/80 active:bg-hover'
                   }`}
               >
                 {key.label}

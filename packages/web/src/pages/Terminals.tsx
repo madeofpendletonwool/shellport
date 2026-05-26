@@ -101,20 +101,22 @@ export default function Terminals() {
           <button
             key={s.id}
             onClick={() => setActiveId(s.id)}
-            className={`flex items-center gap-2 px-3 py-2 text-xs whitespace-nowrap border-b-2 transition-colors flex-shrink-0 ${
+            className={`relative flex items-center gap-2 px-3 py-2 text-xs whitespace-nowrap border-b-2
+                        transition-all duration-180 flex-shrink-0 ${
               activeId === s.id
-                ? 'border-accent text-white'
-                : 'border-transparent text-muted hover:text-white'
+                ? 'border-accent text-white bg-surface3/50 tab-glow'
+                : 'border-transparent text-muted hover:text-white/80 hover:bg-hover/40'
             }`}
           >
             {s.type === 'claude'
-              ? <Bot size={12} className="text-purple-400" />
+              ? <Bot size={12} className={activeId === s.id ? 'text-accent-hover' : 'text-muted'} />
               : <TerminalIcon size={12} />
             }
             {s.name}
             <span
               onClick={e => { e.stopPropagation(); close(s.id) }}
-              className="ml-1 opacity-30 hover:opacity-100 transition-opacity cursor-pointer rounded hover:bg-surface3 p-0.5"
+              className="ml-1 opacity-0 hover:opacity-100 group-hover:opacity-40 transition-opacity
+                         cursor-pointer rounded hover:bg-surface3 p-0.5"
             >
               <X size={10} />
             </span>
@@ -127,7 +129,7 @@ export default function Terminals() {
             onClick={() => spawn('shell')}
             disabled={spawning}
             className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-muted hover:text-white
-                       hover:bg-surface3 rounded transition-colors disabled:opacity-50"
+                       hover:bg-hover rounded-md transition-all duration-180 disabled:opacity-50"
             title="New shell"
           >
             <Plus size={13} /><TerminalIcon size={12} />
@@ -135,8 +137,8 @@ export default function Terminals() {
           <button
             onClick={() => spawn('claude')}
             disabled={spawning}
-            className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-muted hover:text-purple-400
-                       hover:bg-surface3 rounded transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-muted hover:text-accent
+                       hover:bg-accent/10 rounded-md transition-all duration-180 disabled:opacity-50"
             title="New Claude Code session"
           >
             <Plus size={13} /><Bot size={12} />
@@ -145,23 +147,23 @@ export default function Terminals() {
       </div>
 
       {/* Terminal area */}
-      <div className="flex-1 relative bg-black min-h-0">
+      <div className="flex-1 relative bg-[#050816] min-h-0">
         {sessions.length === 0 ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-muted">
-            <TerminalIcon size={40} strokeWidth={1} />
-            <p className="text-sm">No terminals open</p>
-            <div className="flex gap-2">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 text-muted">
+            <TerminalIcon size={36} strokeWidth={1} className="text-muted/50" />
+            <p className="text-sm text-muted/70">No terminals open</p>
+            <div className="flex gap-2.5">
               <button
                 onClick={() => spawn('shell')}
-                className="flex items-center gap-2 px-4 py-2 bg-accent/20 hover:bg-accent/30 text-accent
-                           border border-accent/30 rounded-lg text-sm transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-accent/10 hover:bg-accent/20 text-accent
+                           border border-accent/25 rounded-panel text-sm transition-all duration-180 hover:shadow-glow-xs"
               >
                 <Plus size={14} /> Shell
               </button>
               <button
                 onClick={() => spawn('claude')}
-                className="flex items-center gap-2 px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400
-                           border border-purple-500/30 rounded-lg text-sm transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-accent/10 hover:bg-accent/20 text-accent
+                           border border-accent/25 rounded-panel text-sm transition-all duration-180 hover:shadow-glow-xs"
               >
                 <Plus size={14} /> Claude Code
               </button>

@@ -13,10 +13,12 @@
     height: 100%;
     margin: 0;
     padding: 0;
-    background: #0d0d10;
-    color: #c8c8d8;
-    font-family: system-ui, -apple-system, sans-serif;
+    background: #0B1020;
+    color: #CBD5E1;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
     overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
@@ -28,8 +30,20 @@
   overflow-y: auto !important;
 }
 
-/* custom scrollbar */
+/* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #252530; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #35354a; }
+::-webkit-scrollbar-thumb { background: #1E2940; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #2A3D5A; }
+
+/* Input focus glow — cyan accent ring */
+.focus-glow:focus {
+  outline: none;
+  border-color: #22D3EE;
+  box-shadow: 0 0 0 1px rgba(34,211,238,0.35), 0 0 16px rgba(34,211,238,0.10);
+}
+
+/* Active terminal tab glow underline */
+.tab-glow {
+  box-shadow: 0 2px 10px rgba(34,211,238,0.30);
+}

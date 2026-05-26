@@ -28,23 +28,24 @@ export function useTerminal(
     if (!containerRef.current || !token) return
 
     const term = new Terminal({
-      fontFamily:      "'Menlo','Monaco','Cascadia Code',monospace",
+      fontFamily:      "'JetBrains Mono','Menlo','Monaco',monospace",
       fontSize:        13,
-      lineHeight:      1.2,
+      lineHeight:      1.25,
       cursorBlink:     true,
       macOptionIsMeta: true,
       theme: {
-        background:    '#000000',
-        foreground:    '#d4d4d4',
-        cursor:        '#aeafad',
-        black:         '#1e1e1e',  red:     '#f44747',
-        green:         '#6a9955',  yellow:  '#d7ba7d',
-        blue:          '#569cd6',  magenta: '#c586c0',
-        cyan:          '#4ec9b0',  white:   '#d4d4d4',
-        brightBlack:   '#808080',  brightRed:     '#f44747',
-        brightGreen:   '#b5cea8',  brightYellow:  '#d7ba7d',
-        brightBlue:    '#9cdcfe',  brightMagenta: '#c586c0',
-        brightCyan:    '#4fc1ff',  brightWhite:   '#ffffff',
+        background:    '#050816',
+        foreground:    '#D1E7FF',
+        cursor:        '#22D3EE',
+        selectionBackground: 'rgba(34,211,238,0.2)',
+        black:         '#1a2035',  red:     '#F87171',
+        green:         '#4ADE80',  yellow:  '#FBBF24',
+        blue:          '#60A5FA',  magenta: '#C084FC',
+        cyan:          '#22D3EE',  white:   '#D1E7FF',
+        brightBlack:   '#475569',  brightRed:     '#FCA5A5',
+        brightGreen:   '#86EFAC',  brightYellow:  '#FDE68A',
+        brightBlue:    '#93C5FD',  brightMagenta: '#D8B4FE',
+        brightCyan:    '#67E8F9',  brightWhite:   '#F1F5F9',
       },
     })
 

@@ -23,7 +23,7 @@ function CopyButton({ text }: { text: string }) {
       onClick={() => { navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) }) }}
       className="p-1 text-muted hover:text-white transition-colors"
     >
-      {copied ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
+      {copied ? <Check size={14} className="text-success" /> : <Copy size={14} />}
     </button>
   )
 }
@@ -71,8 +71,8 @@ function OidcProviderModal({ provider, onClose, onSaved }: OidcModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className="bg-surface2 border border-border rounded-xl w-full max-w-md shadow-2xl">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-[4px] flex items-center justify-center z-50 p-4">
+      <div className="bg-surface2 border border-border rounded-card w-full max-w-md shadow-float">
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <h3 className="text-sm font-semibold text-white">
             {provider ? 'Edit OIDC Provider' : 'Add OIDC Provider'}
@@ -82,7 +82,7 @@ function OidcProviderModal({ provider, onClose, onSaved }: OidcModalProps) {
 
         <form onSubmit={handleSubmit} className="p-5 space-y-3">
           {/* Callback URL for IdP config */}
-          <div className="bg-surface3 border border-border rounded-lg p-3 space-y-1">
+          <div className="bg-surface3 border border-border rounded-panel p-3 space-y-1">
             <p className="text-xs text-muted">Redirect URI (paste into your IdP app config)</p>
             <div className="flex items-center gap-2">
               <code className="flex-1 text-xs text-accent font-mono break-all">{callbackUrl}</code>
@@ -93,19 +93,19 @@ function OidcProviderModal({ provider, onClose, onSaved }: OidcModalProps) {
           <label className="block space-y-1">
             <span className="text-xs text-muted">Display name</span>
             <input value={name} onChange={e => setName(e.target.value)} required placeholder="Google SSO"
-              className="w-full bg-surface3 border border-border rounded-lg px-3 py-2 text-sm text-white placeholder-muted focus:outline-none focus:border-accent" />
+              className="w-full bg-surface3 border border-border rounded-lg px-3 py-2 text-sm text-white placeholder-muted transition-all duration-180 focus-glow" />
           </label>
 
           <label className="block space-y-1">
             <span className="text-xs text-muted">Issuer URL</span>
             <input value={issuer} onChange={e => setIssuer(e.target.value)} required placeholder="https://accounts.google.com"
-              className="w-full bg-surface3 border border-border rounded-lg px-3 py-2 text-sm text-white placeholder-muted focus:outline-none focus:border-accent font-mono" />
+              className="w-full bg-surface3 border border-border rounded-lg px-3 py-2 text-sm text-white placeholder-muted transition-all duration-180 focus-glow font-mono" />
           </label>
 
           <label className="block space-y-1">
             <span className="text-xs text-muted">Client ID</span>
             <input value={clientId} onChange={e => setClientId(e.target.value)} required
-              className="w-full bg-surface3 border border-border rounded-lg px-3 py-2 text-sm text-white placeholder-muted focus:outline-none focus:border-accent font-mono" />
+              className="w-full bg-surface3 border border-border rounded-lg px-3 py-2 text-sm text-white placeholder-muted transition-all duration-180 focus-glow font-mono" />
           </label>
 
           <label className="block space-y-1">
@@ -114,20 +114,20 @@ function OidcProviderModal({ provider, onClose, onSaved }: OidcModalProps) {
             </span>
             <input type="password" value={clientSecret} onChange={e => setClientSecret(e.target.value)}
               required={!provider}
-              className="w-full bg-surface3 border border-border rounded-lg px-3 py-2 text-sm text-white placeholder-muted focus:outline-none focus:border-accent font-mono" />
+              className="w-full bg-surface3 border border-border rounded-lg px-3 py-2 text-sm text-white placeholder-muted transition-all duration-180 focus-glow font-mono" />
           </label>
 
           <label className="block space-y-1">
             <span className="text-xs text-muted">Scopes</span>
             <input value={scopes} onChange={e => setScopes(e.target.value)} required
-              className="w-full bg-surface3 border border-border rounded-lg px-3 py-2 text-sm text-white placeholder-muted focus:outline-none focus:border-accent font-mono" />
+              className="w-full bg-surface3 border border-border rounded-lg px-3 py-2 text-sm text-white placeholder-muted transition-all duration-180 focus-glow font-mono" />
           </label>
 
           <div className="flex gap-3">
             <label className="flex-1 block space-y-1">
               <span className="text-xs text-muted">Default role for new users</span>
               <select value={defaultRole} onChange={e => setDefaultRole(e.target.value)}
-                className="w-full bg-surface3 border border-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent">
+                className="w-full bg-surface3 border border-border rounded-lg px-3 py-2 text-sm text-white transition-all duration-180 focus-glow">
                 <option value="user">user</option>
                 <option value="admin">admin</option>
               </select>
@@ -140,17 +140,17 @@ function OidcProviderModal({ provider, onClose, onSaved }: OidcModalProps) {
           </div>
 
           {error && (
-            <p className="text-red-400 text-xs bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2">{error}</p>
+            <p className="text-danger text-xs bg-danger/10 border border-danger/20 rounded-lg px-3 py-2">{error}</p>
           )}
 
           <div className="flex gap-2 pt-1">
             <button type="button" onClick={onClose}
-              className="flex-1 px-4 py-2 text-sm text-muted hover:text-white border border-border rounded-lg transition-colors">
+              className="flex-1 px-4 py-2 text-sm text-muted hover:text-white border border-border rounded-panel transition-all duration-180 hover:bg-hover">
               Cancel
             </button>
             <button type="submit" disabled={saving}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-accent hover:bg-accent/90 disabled:opacity-50
-                         text-white rounded-lg text-sm font-medium transition-colors">
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-accent hover:bg-accent-hover disabled:opacity-50
+                         text-surface rounded-panel text-sm font-semibold transition-all duration-180">
               {saving ? <Loader2 size={14} className="animate-spin" /> : null}
               {saving ? 'Saving…' : (provider ? 'Save changes' : 'Add provider')}
             </button>
@@ -299,7 +299,7 @@ export default function Settings() {
       </div>
 
       {/* Profile / Email */}
-      <section className="bg-surface2 border border-border rounded-xl p-5 space-y-4">
+      <section className="bg-surface2 border border-border rounded-card p-5 space-y-4 shadow-float">
         <h2 className="text-sm font-semibold text-white">Profile</h2>
         <p className="text-xs text-muted">Set your email address to show a Gravatar avatar.</p>
         <form onSubmit={saveEmail} className="flex gap-2">
@@ -309,20 +309,20 @@ export default function Settings() {
             value={email}
             onChange={e => setEmail(e.target.value)}
             className="flex-1 bg-surface3 border border-border rounded-lg px-3 py-2 text-sm text-white
-                       placeholder-muted focus:outline-none focus:border-accent transition-colors"
+                       placeholder-muted transition-all duration-180 focus-glow transition-colors"
           />
           <button type="submit" disabled={savingEmail}
-            className="flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent/90 disabled:opacity-50
-                       text-white rounded-lg text-sm font-medium transition-colors">
+            className="flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent-hover disabled:opacity-50
+                       text-surface rounded-panel text-sm font-semibold transition-all duration-180">
             {savingEmail ? <Loader2 size={14} className="animate-spin" /> : null}
             Save
           </button>
         </form>
-        {emailMsg && <p className={`text-xs ${emailMsg.ok ? 'text-green-400' : 'text-red-400'}`}>{emailMsg.text}</p>}
+        {emailMsg && <p className={`text-xs ${emailMsg.ok ? 'text-success' : 'text-danger'}`}>{emailMsg.text}</p>}
       </section>
 
       {/* API Keys */}
-      <section className="bg-surface2 border border-border rounded-xl p-5 space-y-4">
+      <section className="bg-surface2 border border-border rounded-card p-5 space-y-4 shadow-float">
         <h2 className="text-sm font-semibold text-white">API Keys</h2>
         <p className="text-xs text-muted">Keys allow programmatic access (mobile apps, scripts). Use <code className="text-accent">Authorization: ApiKey &lt;key&gt;</code> header.</p>
 
@@ -333,19 +333,19 @@ export default function Settings() {
             onChange={e => setNewLabel(e.target.value)}
             required
             className="flex-1 bg-surface3 border border-border rounded-lg px-3 py-2 text-sm text-white
-                       placeholder-muted focus:outline-none focus:border-accent transition-colors"
+                       placeholder-muted transition-all duration-180 focus-glow transition-colors"
           />
           <button type="submit" disabled={creating}
-            className="flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent/90 disabled:opacity-50
-                       text-white rounded-lg text-sm font-medium transition-colors">
+            className="flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent-hover disabled:opacity-50
+                       text-surface rounded-panel text-sm font-semibold transition-all duration-180">
             {creating ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
             Create
           </button>
         </form>
 
         {newKey && (
-          <div className="bg-green-400/10 border border-green-400/30 rounded-lg p-3 space-y-2">
-            <p className="text-green-400 text-xs font-medium">Copy this key now — it won't be shown again.</p>
+          <div className="bg-success/10 border border-success/25 rounded-lg p-3 space-y-2">
+            <p className="text-success text-xs font-medium">Copy this key now — it won't be shown again.</p>
             <div className="flex items-center gap-2">
               <code className="flex-1 font-mono text-xs text-green-300 break-all bg-surface3 px-2 py-1 rounded">
                 {showKey ? newKey : '•'.repeat(40)}
@@ -363,12 +363,12 @@ export default function Settings() {
         ) : (
           <div className="space-y-2">
             {keys.map(k => (
-              <div key={k.id} className="flex items-center justify-between bg-surface3 rounded-lg px-3 py-2.5">
+              <div key={k.id} className="flex items-center justify-between bg-surface3 border border-border/50 rounded-panel px-3 py-2.5">
                 <div>
                   <p className="text-sm text-white">{k.label}</p>
                   <p className="text-xs text-muted font-mono">{k.prefix}••••••••</p>
                 </div>
-                <button onClick={() => revokeKey(k.id)} className="p-1.5 text-muted hover:text-red-400 transition-colors">
+                <button onClick={() => revokeKey(k.id)} className="p-1.5 text-muted hover:text-danger transition-colors">
                   <Trash2 size={14} />
                 </button>
               </div>
@@ -379,7 +379,7 @@ export default function Settings() {
 
       {/* OIDC Providers (admin only) */}
       {isAdmin && (
-        <section className="bg-surface2 border border-border rounded-xl p-5 space-y-4">
+        <section className="bg-surface2 border border-border rounded-card p-5 space-y-4 shadow-float">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-sm font-semibold text-white">SSO / OIDC Providers</h2>
@@ -387,7 +387,7 @@ export default function Settings() {
             </div>
             <button
               onClick={() => setOidcModal({})}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-accent hover:bg-accent/90 text-white rounded-lg text-xs font-medium transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-accent hover:bg-accent-hover text-surface rounded-panel text-xs font-semibold transition-all duration-180"
             >
               <Plus size={13} /> Add provider
             </button>
@@ -398,7 +398,7 @@ export default function Settings() {
           ) : (
             <div className="space-y-2">
               {providers.map(p => (
-                <div key={p.id} className="flex items-center justify-between bg-surface3 rounded-lg px-3 py-2.5">
+                <div key={p.id} className="flex items-center justify-between bg-surface3 border border-border/50 rounded-panel px-3 py-2.5">
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-white">{p.name}</span>
@@ -414,7 +414,7 @@ export default function Settings() {
                       <Pencil size={13} />
                     </button>
                     <button onClick={() => deleteProvider(p.id)}
-                      className="p-1.5 text-muted hover:text-red-400 transition-colors">
+                      className="p-1.5 text-muted hover:text-danger transition-colors">
                       <Trash2 size={13} />
                     </button>
                   </div>
@@ -426,7 +426,7 @@ export default function Settings() {
       )}
 
       {/* Default shell */}
-      <section className="bg-surface2 border border-border rounded-xl p-5 space-y-4">
+      <section className="bg-surface2 border border-border rounded-card p-5 space-y-4 shadow-float">
         <h2 className="text-sm font-semibold text-white">Default Shell</h2>
         <p className="text-xs text-muted">Shell used for new terminal sessions. Currently: <code className="text-accent">{shell || '…'}</code></p>
         <form onSubmit={saveShell} className="flex gap-2">
@@ -436,39 +436,39 @@ export default function Settings() {
             onChange={e => setShellInput(e.target.value)}
             required
             className="flex-1 bg-surface3 border border-border rounded-lg px-3 py-2 text-sm text-white font-mono
-                       placeholder-muted focus:outline-none focus:border-accent transition-colors"
+                       placeholder-muted transition-all duration-180 focus-glow transition-colors"
           />
           <button type="submit" disabled={savingShell}
-            className="flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent/90 disabled:opacity-50
-                       text-white rounded-lg text-sm font-medium transition-colors">
+            className="flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent-hover disabled:opacity-50
+                       text-surface rounded-panel text-sm font-semibold transition-all duration-180">
             {savingShell ? <Loader2 size={14} className="animate-spin" /> : null}
             Save
           </button>
         </form>
-        {shellMsg && <p className={`text-xs ${shellMsg.ok ? 'text-green-400' : 'text-red-400'}`}>{shellMsg.text}</p>}
+        {shellMsg && <p className={`text-xs ${shellMsg.ok ? 'text-success' : 'text-danger'}`}>{shellMsg.text}</p>}
         <p className="text-xs text-muted">Changes apply to new sessions immediately but reset on server restart. Set <code className="text-accent">DEFAULT_SHELL</code> in <code className="text-accent">.env</code> to persist.</p>
       </section>
 
       {/* Change password */}
-      <section className="bg-surface2 border border-border rounded-xl p-5 space-y-4">
+      <section className="bg-surface2 border border-border rounded-card p-5 space-y-4 shadow-float">
         <h2 className="text-sm font-semibold text-white">Change Password</h2>
         <form onSubmit={changePassword} className="space-y-3">
           <input
             type="password" placeholder="Current password" value={curPw}
             onChange={e => setCurPw(e.target.value)} required autoComplete="current-password"
             className="w-full bg-surface3 border border-border rounded-lg px-3 py-2 text-sm text-white
-                       placeholder-muted focus:outline-none focus:border-accent transition-colors"
+                       placeholder-muted transition-all duration-180 focus-glow transition-colors"
           />
           <input
             type="password" placeholder="New password (min 8 chars)" value={newPw}
             onChange={e => setNewPw(e.target.value)} required minLength={8} autoComplete="new-password"
             className="w-full bg-surface3 border border-border rounded-lg px-3 py-2 text-sm text-white
-                       placeholder-muted focus:outline-none focus:border-accent transition-colors"
+                       placeholder-muted transition-all duration-180 focus-glow transition-colors"
           />
-          {pwMsg && <p className={`text-xs ${pwMsg.ok ? 'text-green-400' : 'text-red-400'}`}>{pwMsg.text}</p>}
+          {pwMsg && <p className={`text-xs ${pwMsg.ok ? 'text-success' : 'text-danger'}`}>{pwMsg.text}</p>}
           <button type="submit" disabled={savingPw}
-            className="flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent/90 disabled:opacity-50
-                       text-white rounded-lg text-sm font-medium transition-colors">
+            className="flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent-hover disabled:opacity-50
+                       text-surface rounded-panel text-sm font-semibold transition-all duration-180">
             {savingPw ? <Loader2 size={14} className="animate-spin" /> : null}
             Update Password
           </button>
