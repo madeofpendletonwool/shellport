@@ -55,17 +55,28 @@ export default function Layout() {
         {/* User + logout */}
         <div className="border-t border-border p-2">
           <div className="flex items-center gap-2 px-2 py-1.5">
-            <div className="w-6 h-6 rounded-full bg-accent/30 flex items-center justify-center flex-shrink-0">
-              <span className="text-accent text-xs font-bold">
-                {user?.username?.[0]?.toUpperCase() ?? '?'}
-              </span>
+            {user?.avatarUrl ? (
+              <img
+                src={user.avatarUrl}
+                alt={user.username}
+                className="w-6 h-6 rounded-full flex-shrink-0 bg-surface3"
+              />
+            ) : (
+              <div className="w-6 h-6 rounded-full bg-accent/30 flex items-center justify-center flex-shrink-0">
+                <span className="text-accent text-xs font-bold">
+                  {user?.username?.[0]?.toUpperCase() ?? '?'}
+                </span>
+              </div>
+            )}
+            <div className="hidden md:flex flex-col flex-1 min-w-0">
+              <span className="text-xs text-white truncate">{user?.username}</span>
+              {user?.email && (
+                <span className="text-xs text-muted truncate">{user.email}</span>
+              )}
             </div>
-            <span className="hidden md:block text-xs text-muted truncate flex-1">
-              {user?.username}
-            </span>
             <button
               onClick={handleLogout}
-              className="p-1 text-muted hover:text-red-400 transition-colors"
+              className="p-1 text-muted hover:text-red-400 transition-colors flex-shrink-0"
               title="Log out"
             >
               <LogOut size={14} />

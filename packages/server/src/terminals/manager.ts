@@ -4,13 +4,14 @@ import { terminalSessions } from '../db/schema.js'
 import { config } from '../config.js'
 import { Session } from './session.js'
 
+type TabEvent = 'tab:open' | 'tab:close'
+type TabListener = (event: TabEvent, data: unknown) => void
+
 function initNextId(): number {
   const row = db.select({ m: max(terminalSessions.id) }).from(terminalSessions).get()
   return (row?.m ?? 0) + 1
 }
 
-// On startup, any session without endedAt is an orphan — the PTY died with the
-// previous server process. Mark them ended so the list stays clean.
 function cleanupOrphans() {
   db.update(terminalSessions)
     .set({ endedAt: Math.floor(Date.now() / 1000) })
@@ -19,10 +20,20 @@ function cleanupOrphans() {
 }
 
 export class TerminalManager {
-  private sessions = new Map<number, Session>()
-  private _nextId  = initNextId()
+  private sessions  = new Map<number, Session>()
+  private _nextId   = initNextId()
+  private listeners = new Set<TabListener>()
 
   constructor() { cleanupOrphans() }
+
+  onEvent(fn: TabListener)  { this.listeners.add(fn) }
+  offEvent(fn: TabListener) { this.listeners.delete(fn) }
+
+  private emit(event: TabEvent, data: unknown) {
+    for (const fn of this.listeners) {
+      try { fn(event, data) } catch { /* ignore broken listeners */ }
+    }
+  }
 
   create(opts: {
     name?:    string
@@ -53,6 +64,7 @@ export class TerminalManager {
     sess['ptyProcess']?.onExit?.(() => this.markEnded(id))
 
     this.sessions.set(id, sess)
+    this.emit('tab:open', { id, name, type, alive: true, cols, rows, createdAt: Math.floor(Date.now() / 1000) })
     return sess
   }
 
@@ -62,6 +74,7 @@ export class TerminalManager {
       .where(eq(terminalSessions.id, id))
       .run()
     this.sessions.delete(id)
+    this.emit('tab:close', { id })
   }
 
   get(id: number): Session | undefined {
@@ -74,7 +87,7 @@ export class TerminalManager {
       .all()
       .map(row => ({
         id:        row.id,
-        name:      row.name,
+        name:      this.sessions.get(row.id)?.name ?? row.name,
         type:      row.type,
         alive:     this.sessions.get(row.id)?.alive ?? false,
         cols:      220,

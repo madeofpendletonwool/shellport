@@ -1,6 +1,7 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { Plus, X, Bot, TerminalIcon } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
+import { useAuth } from '@/lib/auth'
 import TerminalPane from '@/components/TerminalPane'
 
 interface Session { id: number; name: string; type: string; alive: boolean }
@@ -9,15 +10,52 @@ export default function Terminals() {
   const [sessions,  setSessions]  = useState<Session[]>([])
   const [activeId,  setActiveId]  = useState<number | null>(null)
   const [spawning,  setSpawning]  = useState(false)
+  const activeRef  = useRef(activeId)
+  activeRef.current = activeId
 
-  // Load existing sessions on mount so switching devices reconnects to running PTYs
+  // SSE connection for hot tab sync across all devices
   useEffect(() => {
-    apiFetch<Session[]>('/api/terminals').then(list => {
-      const alive = list.filter(s => s.alive)
-      setSessions(alive)
-      if (alive.length > 0) setActiveId(alive[alive.length - 1].id)
-    }).catch(() => {})
-  }, [])
+    const token = useAuth.getState().token
+    if (!token) return
+
+    const es = new EventSource(`/api/terminals/events?token=${encodeURIComponent(token)}`)
+
+    // Full resync (on connect + reconnect)
+    es.addEventListener('sync', (e) => {
+      const list = (JSON.parse(e.data) as Session[]).filter(s => s.alive)
+      setSessions(list)
+      setActiveId(prev => {
+        if (prev !== null && list.some(s => s.id === prev)) return prev
+        return list.at(-1)?.id ?? null
+      })
+    })
+
+    // Another device opened a tab
+    es.addEventListener('tab:open', (e) => {
+      const sess = JSON.parse(e.data) as Session
+      setSessions(prev => {
+        if (prev.some(s => s.id === sess.id)) return prev  // dedup (our own open)
+        return [...prev, sess]
+      })
+    })
+
+    // Tab closed (PTY exit or another device closed it)
+    es.addEventListener('tab:close', (e) => {
+      const { id } = JSON.parse(e.data) as { id: number }
+      setSessions(prev => {
+        if (!prev.some(s => s.id === id)) return prev  // already gone
+        const next = prev.filter(s => s.id !== id)
+        setActiveId(cur => cur === id ? (next.at(-1)?.id ?? null) : cur)
+        return next
+      })
+    })
+
+    es.onerror = () => {
+      // EventSource auto-reconnects; on reconnect 'sync' fires again
+    }
+
+    return () => es.close()
+  }, [])  // intentionally run once — SSE reconnects automatically
 
   const spawn = useCallback(async (type: 'shell' | 'claude') => {
     setSpawning(true)
@@ -26,7 +64,8 @@ export default function Terminals() {
         method: 'POST',
         body:   JSON.stringify({ type, cols: 220, rows: 50 }),
       })
-      setSessions(prev => [...prev, sess])
+      // Optimistic update: add immediately and focus (SSE will deduplicate)
+      setSessions(prev => prev.some(s => s.id === sess.id) ? prev : [...prev, sess])
       setActiveId(sess.id)
     } finally {
       setSpawning(false)
@@ -35,20 +74,24 @@ export default function Terminals() {
 
   const close = useCallback(async (id: number) => {
     await apiFetch(`/api/terminals/${id}`, { method: 'DELETE' }).catch(() => {})
+    // SSE tab:close will handle updating all devices including this one,
+    // but also update immediately for snappy UX
     setSessions(prev => {
       const next = prev.filter(s => s.id !== id)
-      if (activeId === id) setActiveId(next.at(-1)?.id ?? null)
+      if (activeRef.current === id) setActiveId(next.at(-1)?.id ?? null)
       return next
     })
-  }, [activeId])
+  }, [])
 
   const handleExit = useCallback((id: number) => {
+    // PTY exited — SSE tab:close will sync all devices; also update locally
     setSessions(prev => {
+      if (!prev.some(s => s.id === id)) return prev
       const next = prev.filter(s => s.id !== id)
-      if (activeId === id) setActiveId(next.at(-1)?.id ?? null)
+      setActiveId(cur => cur === id ? (next.at(-1)?.id ?? null) : cur)
       return next
     })
-  }, [activeId])
+  }, [])
 
   return (
     <div className="flex flex-col h-full">

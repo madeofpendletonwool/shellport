@@ -1,11 +1,12 @@
 import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '@/lib/auth'
-import Layout    from '@/components/Layout'
-import Login     from '@/pages/Login'
-import Ports     from '@/pages/Ports'
-import Logs      from '@/pages/Logs'
-import Settings  from '@/pages/Settings'
+import Layout       from '@/components/Layout'
+import Login        from '@/pages/Login'
+import OIDCCallback from '@/pages/OIDCCallback'
+import Ports        from '@/pages/Ports'
+import Logs         from '@/pages/Logs'
+import Settings     from '@/pages/Settings'
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { token, ready } = useAuth()
@@ -25,7 +26,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<Login />} />
+        <Route path="/login"         element={<Login />} />
+        <Route path="/auth/callback" element={<OIDCCallback />} />
         <Route path="/" element={<AuthGuard><Layout /></AuthGuard>}>
           <Route index element={<Navigate to="/terminals" replace />} />
           <Route path="terminals" element={null} />

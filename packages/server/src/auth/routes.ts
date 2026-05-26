@@ -13,6 +13,30 @@ const REFRESH_TTL = 7 * 24 * 3600    // 7 days (seconds)
 
 function now() { return Math.floor(Date.now() / 1000) }
 
+export function gravatarUrl(email: string | null | undefined, size = 40): string {
+  if (!email) return ''
+  const hash = createHash('md5').update(email.trim().toLowerCase()).digest('hex')
+  return `https://www.gravatar.com/avatar/${hash}?d=identicon&s=${size}`
+}
+
+export function issueTokens(app: FastifyInstance, user: { id: number; username: string; role: string; email?: string | null }) {
+  const email = user.email ?? undefined
+  const accessToken = app.jwt.sign(
+    { id: user.id, username: user.username, role: user.role, email, avatarUrl: gravatarUrl(email) },
+    { expiresIn: ACCESS_TTL }
+  )
+  const rawRefresh = randomBytes(40).toString('hex')
+  const tokenHash  = createHash('sha256').update(rawRefresh).digest('hex')
+  db.insert(refreshTokens).values({
+    userId:    user.id,
+    tokenHash,
+    expiresAt: now() + REFRESH_TTL,
+    createdAt: now(),
+    revoked:   0,
+  }).run()
+  return { accessToken, rawRefresh }
+}
+
 export async function authRoutes(app: FastifyInstance) {
 
   // POST /api/auth/login
@@ -28,20 +52,7 @@ export async function authRoutes(app: FastifyInstance) {
     const ok = await compare(password, user.passwordHash)
     if (!ok) return reply.status(401).send({ error: 'Invalid credentials' })
 
-    const accessToken = app.jwt.sign(
-      { id: user.id, username: user.username, role: user.role },
-      { expiresIn: ACCESS_TTL }
-    )
-
-    const rawRefresh = randomBytes(40).toString('hex')
-    const tokenHash  = createHash('sha256').update(rawRefresh).digest('hex')
-    db.insert(refreshTokens).values({
-      userId:    user.id,
-      tokenHash,
-      expiresAt: now() + REFRESH_TTL,
-      createdAt: now(),
-      revoked:   0,
-    }).run()
+    const { accessToken, rawRefresh } = issueTokens(app, user)
 
     reply.setCookie('refreshToken', rawRefresh, {
       httpOnly: true,
@@ -68,26 +79,12 @@ export async function authRoutes(app: FastifyInstance) {
       return reply.status(401).send({ error: 'Refresh token expired or invalid' })
     }
 
-    // rotate: revoke old, issue new
     db.update(refreshTokens).set({ revoked: 1 }).where(eq(refreshTokens.id, row.id)).run()
 
     const user = db.select().from(users).where(eq(users.id, row.userId)).get()
     if (!user) return reply.status(401).send({ error: 'User not found' })
 
-    const accessToken = app.jwt.sign(
-      { id: user.id, username: user.username, role: user.role },
-      { expiresIn: ACCESS_TTL }
-    )
-
-    const newRaw   = randomBytes(40).toString('hex')
-    const newHash  = createHash('sha256').update(newRaw).digest('hex')
-    db.insert(refreshTokens).values({
-      userId:    user.id,
-      tokenHash: newHash,
-      expiresAt: now() + REFRESH_TTL,
-      createdAt: now(),
-      revoked:   0,
-    }).run()
+    const { accessToken, rawRefresh: newRaw } = issueTokens(app, user)
 
     reply.setCookie('refreshToken', newRaw, {
       httpOnly: true,
@@ -114,7 +111,15 @@ export async function authRoutes(app: FastifyInstance) {
 
   // GET /api/auth/me
   app.get('/api/auth/me', { preHandler: authenticate }, async (req) => {
-    return { id: req.user.id, username: req.user.username, role: req.user.role }
+    const user = db.select().from(users).where(eq(users.id, req.user.id)).get()
+    const email = user?.email ?? null
+    return {
+      id:        req.user.id,
+      username:  req.user.username,
+      role:      req.user.role,
+      email,
+      avatarUrl: gravatarUrl(email),
+    }
   })
 
   // GET /api/auth/api-keys
@@ -172,5 +177,12 @@ export async function authRoutes(app: FastifyInstance) {
     const passwordHash = await hash(newPassword, 12)
     db.update(users).set({ passwordHash }).where(eq(users.id, req.user.id)).run()
     return { ok: true }
+  })
+
+  // PATCH /api/auth/profile — update email
+  app.patch('/api/auth/profile', { preHandler: authenticate }, async (req) => {
+    const { email } = z.object({ email: z.string().email().nullable() }).parse(req.body)
+    db.update(users).set({ email: email ?? null }).where(eq(users.id, req.user.id)).run()
+    return { ok: true, avatarUrl: gravatarUrl(email) }
   })
 }

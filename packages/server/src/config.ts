@@ -2,16 +2,19 @@ import { z } from 'zod'
 import { execSync } from 'child_process'
 
 const env = z.object({
-  PORT:           z.coerce.number().default(3001),
-  NODE_ENV:       z.enum(['development', 'production', 'test']).default('development'),
-  JWT_SECRET:     z.string().min(16),
-  REFRESH_SECRET: z.string().min(16),
-  ADMIN_USERNAME: z.string().default('admin'),
-  ADMIN_PASSWORD: z.string().min(8),
-  DB_PATH:        z.string().default('./shellport.db'),
-  LOG_DIRS:       z.string().default('/tmp'),
-  DEFAULT_SHELL:  z.string().optional(),
-  CLAUDE_BIN:     z.string().optional(),
+  PORT:             z.coerce.number().default(3001),
+  NODE_ENV:         z.enum(['development', 'production', 'test']).default('development'),
+  JWT_SECRET:       z.string().min(16),
+  REFRESH_SECRET:   z.string().min(16),
+  ADMIN_USERNAME:   z.string().default('admin'),
+  ADMIN_PASSWORD:   z.string().min(8),
+  ADMIN_EMAIL:      z.string().email().optional(),
+  DB_PATH:          z.string().default('./shellport.db'),
+  LOG_DIRS:         z.string().default('/tmp'),
+  DEFAULT_SHELL:    z.string().optional(),
+  CLAUDE_BIN:       z.string().optional(),
+  FRONTEND_URL:     z.string().optional(),
+  OIDC_SECRET_KEY:  z.string().optional(),  // 64-char hex = 32-byte AES-256 key
 }).parse(process.env)
 
 function resolveClaude(): string {

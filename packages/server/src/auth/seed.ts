@@ -11,6 +11,7 @@ export async function seedAdmin() {
   const passwordHash = await hash(config.ADMIN_PASSWORD, 12)
   db.insert(users).values({
     username:     config.ADMIN_USERNAME,
+    email:        config.ADMIN_EMAIL ?? null,
     passwordHash,
     role:         'admin',
     createdAt:    Math.floor(Date.now() / 1000),

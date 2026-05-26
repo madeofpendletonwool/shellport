@@ -12,6 +12,7 @@ import { config }      from './config.js'
 import { runMigrations } from './db/index.js'
 import { seedAdmin }   from './auth/seed.js'
 import { authRoutes }  from './auth/routes.js'
+import { oidcRoutes }  from './auth/oidc.js'
 import { terminalRoutes } from './terminals/routes.js'
 import { portRoutes }  from './ports/routes.js'
 import { portRegistry } from './ports/registry.js'
@@ -59,6 +60,7 @@ app.patch('/api/server-config', { preHandler: authenticate }, async (req, reply)
 
 // ── routes ────────────────────────────────────────────────────────────────────
 await app.register(authRoutes)
+await app.register(oidcRoutes)
 await app.register(terminalRoutes)
 await app.register(portRoutes)
 await app.register(logRoutes)

@@ -4,11 +4,10 @@ import { db } from '../db/index.js'
 import { apiKeys, users } from '../db/schema.js'
 import { eq, and } from 'drizzle-orm'
 
-// Teach @fastify/jwt the shape of our token payload
 declare module '@fastify/jwt' {
   interface FastifyJWT {
-    payload: { id: number; username: string; role: string }
-    user:    { id: number; username: string; role: string }
+    payload: { id: number; username: string; role: string; email?: string; avatarUrl?: string }
+    user:    { id: number; username: string; role: string; email?: string; avatarUrl?: string }
   }
 }
 
@@ -36,7 +35,7 @@ export async function authenticate(req: FastifyRequest, reply: FastifyReply) {
 
     const user = db.select().from(users).where(eq(users.id, row.userId)).get()
     if (!user) return reply.status(401).send({ error: 'User not found' })
-    req.user = { id: user.id, username: user.username, role: user.role }
+    req.user = { id: user.id, username: user.username, role: user.role, email: user.email ?? undefined }
     return
   }
 
@@ -47,4 +46,3 @@ export async function authenticate(req: FastifyRequest, reply: FastifyReply) {
     return reply.status(401).send({ error: 'Unauthorized' })
   }
 }
-

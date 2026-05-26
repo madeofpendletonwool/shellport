@@ -1,15 +1,22 @@
 import { create } from 'zustand'
 
-interface User { id: number; username: string; role: string }
+export interface User {
+  id:        number
+  username:  string
+  role:      string
+  email?:    string
+  avatarUrl: string
+}
 
 interface AuthState {
-  token:  string | null
-  user:   User | null
-  ready:  boolean
-  login:  (username: string, password: string) => Promise<void>
-  logout: () => Promise<void>
-  refresh: () => Promise<boolean>
-  init:   () => Promise<void>
+  token:          string | null
+  user:           User | null
+  ready:          boolean
+  login:          (username: string, password: string) => Promise<void>
+  loginWithToken: (accessToken: string) => void
+  logout:         () => Promise<void>
+  refresh:        () => Promise<boolean>
+  init:           () => Promise<void>
 }
 
 let _refreshTimer: ReturnType<typeof setTimeout> | null = null
@@ -18,6 +25,18 @@ function scheduleRefresh(expiresIn: number, refreshFn: () => Promise<boolean>) {
   if (_refreshTimer) clearTimeout(_refreshTimer)
   const delay = Math.max((expiresIn - 60) * 1000, 5000)
   _refreshTimer = setTimeout(refreshFn, delay)
+}
+
+function userFromJwt(token: string): User {
+  const b64     = token.split('.')[1]
+  const payload = JSON.parse(atob(b64.replace(/-/g, '+').replace(/_/g, '/')))
+  return {
+    id:        payload.id,
+    username:  payload.username,
+    role:      payload.role,
+    email:     payload.email,
+    avatarUrl: payload.avatarUrl ?? '',
+  }
 }
 
 export const useAuth = create<AuthState>((set, get) => ({
@@ -30,11 +49,19 @@ export const useAuth = create<AuthState>((set, get) => ({
     if (!ok) set({ ready: true })
   },
 
+  loginWithToken: (accessToken: string) => {
+    const user = userFromJwt(accessToken)
+    set({ token: accessToken, user, ready: true })
+    const b64       = accessToken.split('.')[1]
+    const { exp, iat } = JSON.parse(atob(b64.replace(/-/g, '+').replace(/_/g, '/')))
+    scheduleRefresh(exp - iat, get().refresh)
+  },
+
   login: async (username, password) => {
     const res = await fetch('/api/auth/login', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ username, password }),
+      method:      'POST',
+      headers:     { 'Content-Type': 'application/json' },
+      body:        JSON.stringify({ username, password }),
       credentials: 'include',
     })
     if (!res.ok) {
@@ -42,8 +69,7 @@ export const useAuth = create<AuthState>((set, get) => ({
       throw new Error((err as any).error ?? 'Login failed')
     }
     const { accessToken, expiresIn } = await res.json()
-    const user = parseJwtPayload(accessToken)
-    set({ token: accessToken, user, ready: true })
+    set({ token: accessToken, user: userFromJwt(accessToken), ready: true })
     scheduleRefresh(expiresIn, get().refresh)
   },
 
@@ -58,8 +84,7 @@ export const useAuth = create<AuthState>((set, get) => ({
       const res = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' })
       if (!res.ok) { set({ token: null, user: null, ready: true }); return false }
       const { accessToken, expiresIn } = await res.json()
-      const user = parseJwtPayload(accessToken)
-      set({ token: accessToken, user, ready: true })
+      set({ token: accessToken, user: userFromJwt(accessToken), ready: true })
       scheduleRefresh(expiresIn, get().refresh)
       return true
     } catch {
@@ -68,8 +93,3 @@ export const useAuth = create<AuthState>((set, get) => ({
     }
   },
 }))
-
-function parseJwtPayload(token: string): User {
-  const b64 = token.split('.')[1]
-  return JSON.parse(atob(b64.replace(/-/g, '+').replace(/_/g, '/')))
-}
