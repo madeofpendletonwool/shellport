@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '@/lib/auth'
 import Layout    from '@/components/Layout'
 import Login     from '@/pages/Login'
-import Terminals from '@/pages/Terminals'
 import Ports     from '@/pages/Ports'
 import Logs      from '@/pages/Logs'
 import Settings  from '@/pages/Settings'
@@ -29,7 +28,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/" element={<AuthGuard><Layout /></AuthGuard>}>
           <Route index element={<Navigate to="/terminals" replace />} />
-          <Route path="terminals" element={<Terminals />} />
+          <Route path="terminals" element={null} />
           <Route path="ports"     element={<Ports />} />
           <Route path="logs"      element={<Logs />} />
           <Route path="settings"  element={<Settings />} />

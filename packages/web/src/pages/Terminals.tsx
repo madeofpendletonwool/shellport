@@ -1,14 +1,23 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Plus, X, Bot, TerminalIcon } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import TerminalPane from '@/components/TerminalPane'
 
-interface Session { id: number; name: string; type: string }
+interface Session { id: number; name: string; type: string; alive: boolean }
 
 export default function Terminals() {
   const [sessions,  setSessions]  = useState<Session[]>([])
   const [activeId,  setActiveId]  = useState<number | null>(null)
   const [spawning,  setSpawning]  = useState(false)
+
+  // Load existing sessions on mount so switching devices reconnects to running PTYs
+  useEffect(() => {
+    apiFetch<Session[]>('/api/terminals').then(list => {
+      const alive = list.filter(s => s.alive)
+      setSessions(alive)
+      if (alive.length > 0) setActiveId(alive[alive.length - 1].id)
+    }).catch(() => {})
+  }, [])
 
   const spawn = useCallback(async (type: 'shell' | 'claude') => {
     setSpawning(true)

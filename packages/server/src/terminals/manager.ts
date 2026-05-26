@@ -1,13 +1,28 @@
-import { eq } from 'drizzle-orm'
+import { eq, max, isNull } from 'drizzle-orm'
 import { db } from '../db/index.js'
 import { terminalSessions } from '../db/schema.js'
 import { config } from '../config.js'
 import { Session } from './session.js'
 
-let _nextId = 1
+function initNextId(): number {
+  const row = db.select({ m: max(terminalSessions.id) }).from(terminalSessions).get()
+  return (row?.m ?? 0) + 1
+}
+
+// On startup, any session without endedAt is an orphan — the PTY died with the
+// previous server process. Mark them ended so the list stays clean.
+function cleanupOrphans() {
+  db.update(terminalSessions)
+    .set({ endedAt: Math.floor(Date.now() / 1000) })
+    .where(isNull(terminalSessions.endedAt))
+    .run()
+}
 
 export class TerminalManager {
   private sessions = new Map<number, Session>()
+  private _nextId  = initNextId()
+
+  constructor() { cleanupOrphans() }
 
   create(opts: {
     name?:    string
@@ -16,22 +31,14 @@ export class TerminalManager {
     rows?:    number
     workdir?: string
   }): Session {
-    const id      = _nextId++
-    const type    = opts.type ?? 'shell'
-    const name    = opts.name ?? (type === 'claude' ? `claude-${id}` : `term-${id}`)
-    const cols    = opts.cols ?? 220
-    const rows    = opts.rows ?? 50
+    const id   = this._nextId++
+    const type = opts.type ?? 'shell'
+    const name = opts.name ?? (type === 'claude' ? `claude-${id}` : `term-${id}`)
+    const cols = opts.cols ?? 220
+    const rows = opts.rows ?? 50
 
-    let shell: string
-    let args:  string[]
-
-    if (type === 'claude') {
-      shell = config.CLAUDE_BIN
-      args  = []
-    } else {
-      shell = config.DEFAULT_SHELL
-      args  = ['--login']
-    }
+    const shell = type === 'claude' ? config.CLAUDE_BIN : config.DEFAULT_SHELL
+    const args  = type === 'claude' ? [] : ['--login']
 
     const sess = new Session({ id, name, type, shell, args, cols, rows, workdir: opts.workdir })
 
@@ -61,12 +68,9 @@ export class TerminalManager {
     return this.sessions.get(id)
   }
 
-  list(): Array<{
-    id: number; name: string; type: string
-    alive: boolean; cols: number; rows: number; createdAt: number
-  }> {
+  list() {
     return db.select().from(terminalSessions)
-      .where(eq(terminalSessions.endedAt, null as unknown as number))
+      .where(isNull(terminalSessions.endedAt))
       .all()
       .map(row => ({
         id:        row.id,

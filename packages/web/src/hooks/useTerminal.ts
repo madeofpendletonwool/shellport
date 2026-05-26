@@ -4,6 +4,8 @@ import { FitAddon }    from '@xterm/addon-fit'
 import { WebLinksAddon } from '@xterm/addon-web-links'
 import { useAuth }     from '@/lib/auth'
 
+export type Modifier = 'ctrl' | 'alt' | null
+
 export interface TerminalHandle {
   term:    Terminal
   fit:     () => void
@@ -15,9 +17,12 @@ export function useTerminal(
   sessionId:    number,
   onExit?:      (id: number) => void,
 ) {
-  const handleRef = useRef<TerminalHandle | null>(null)
-  const wsRef     = useRef<WebSocket | null>(null)
-  const token     = useAuth(s => s.token)
+  const handleRef      = useRef<TerminalHandle | null>(null)
+  const wsRef          = useRef<WebSocket | null>(null)
+  const token          = useAuth(s => s.token)
+  const ctrlRef        = useRef(false)
+  const altRef         = useRef(false)
+  const modConsumedRef = useRef<(() => void) | null>(null)
 
   useEffect(() => {
     if (!containerRef.current || !token) return
@@ -76,8 +81,20 @@ export function useTerminal(
     }
 
     term.onData(data => {
+      let out = data
+      // Sticky modifier set by the mobile keybar: intercept next printable char
+      if (ctrlRef.current && data.length === 1) {
+        const c = data.toLowerCase()
+        if (c >= 'a' && c <= 'z') out = String.fromCharCode(c.charCodeAt(0) - 96)
+        ctrlRef.current = false
+        modConsumedRef.current?.()
+      } else if (altRef.current && data.length === 1) {
+        out = '\x1b' + data
+        altRef.current = false
+        modConsumedRef.current?.()
+      }
       if (ws.readyState === WebSocket.OPEN)
-        ws.send(JSON.stringify({ type: 'input', data }))
+        ws.send(JSON.stringify({ type: 'input', data: out }))
     })
 
     const ro = new ResizeObserver(() => {
@@ -108,5 +125,19 @@ export function useTerminal(
 
   const fit = useCallback(() => handleRef.current?.fit(), [])
 
-  return { handleRef, fit }
+  const sendInput = useCallback((data: string) => {
+    const ws = wsRef.current
+    if (ws?.readyState === WebSocket.OPEN)
+      ws.send(JSON.stringify({ type: 'input', data }))
+  }, [])
+
+  // Called by MobileKeybar when a sticky modifier is toggled.
+  // onConsumed fires (resetting keybar UI) when the next physical keypress absorbs it.
+  const setModifier = useCallback((mod: Modifier, onConsumed?: () => void) => {
+    ctrlRef.current        = mod === 'ctrl'
+    altRef.current         = mod === 'alt'
+    modConsumedRef.current = onConsumed ?? null
+  }, [])
+
+  return { handleRef, fit, sendInput, setModifier }
 }

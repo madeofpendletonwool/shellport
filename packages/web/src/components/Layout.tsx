@@ -1,6 +1,7 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { Terminal, Globe, FileText, Settings, LogOut, Cpu } from 'lucide-react'
 import { useAuth } from '@/lib/auth'
+import Terminals from '@/pages/Terminals'
 
 const nav = [
   { to: '/terminals', icon: Terminal, label: 'Terminals' },
@@ -11,7 +12,9 @@ const nav = [
 
 export default function Layout() {
   const { user, logout } = useAuth()
-  const navigate = useNavigate()
+  const navigate  = useNavigate()
+  const location  = useLocation()
+  const onTerminals = location.pathname === '/terminals' || location.pathname === '/'
 
   const handleLogout = async () => {
     await logout()
@@ -72,8 +75,12 @@ export default function Layout() {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
-        <Outlet />
+      <main className="flex-1 min-w-0 flex flex-col overflow-hidden relative">
+        {/* Terminals stays mounted always so sessions + WS survive navigation */}
+        <div className="absolute inset-0 flex flex-col" style={{ display: onTerminals ? 'flex' : 'none' }}>
+          <Terminals />
+        </div>
+        {!onTerminals && <Outlet />}
       </main>
     </div>
   )
