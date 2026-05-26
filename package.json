@@ -1,0 +1,19 @@
+{
+  "name": "shellport",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "pnpm build && node --env-file=.env packages/server/dist/index.js",
+    "dev": "concurrently -n server,web -c cyan,magenta \"pnpm --filter server dev\" \"pnpm --filter web dev\"",
+    "build": "pnpm --filter server build && pnpm --filter web build",
+    "docker:up": "docker compose up --build -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["better-sqlite3", "esbuild", "node-pty"]
+  }
+}

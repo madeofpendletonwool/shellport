@@ -1,0 +1,32 @@
+FROM node:22-alpine AS builder
+
+RUN apk add --no-cache python3 make g++
+RUN corepack enable && corepack prepare pnpm@10 --activate
+
+WORKDIR /app
+
+COPY pnpm-workspace.yaml .npmrc package.json pnpm.json ./
+COPY packages/server/package.json packages/server/
+RUN mkdir -p packages/web && echo '{"name":"web","version":"0.0.0"}' > packages/web/package.json
+
+RUN pnpm install --no-frozen-lockfile
+
+COPY packages/server packages/server
+RUN pnpm --filter server build
+
+# ── runtime ───────────────────────────────────────────────────────────────────
+# Same base image → native .node binaries are ABI-compatible, safe to copy.
+FROM node:22-alpine
+
+RUN apk add --no-cache bash
+
+WORKDIR /app
+
+COPY --from=builder /app/node_modules             ./node_modules
+COPY --from=builder /app/packages/server/dist     ./packages/server/dist
+COPY packages/server/src/db/migrations            ./packages/server/dist/db/migrations
+COPY pnpm-workspace.yaml .npmrc package.json      ./
+COPY packages/server/package.json                 packages/server/
+
+EXPOSE 3001
+CMD ["node", "packages/server/dist/index.js"]
